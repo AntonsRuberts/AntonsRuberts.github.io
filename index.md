@@ -1,3 +1,4 @@
-#Front Page
+# Front Page
 
-This is blog
+1. This is blog
+2. These are points
