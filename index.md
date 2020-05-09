@@ -1,4 +1,3 @@
-# Front Page
+#My Blog
 
-1. This is blog
-2. These are points
+[Me](about.md)
