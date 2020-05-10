@@ -5,7 +5,7 @@ tags: [testing, machine learning, causality]
 excerpt: "Establish treatment effect of a test in the presence of confounders using CausalML."
 mathjax: "true"
 ---
-<img src="{{ site.url }}{{ site.baseirl }}/assets/images/causalml_test/header.png", alt="header-image-causality">
+<img src="/assets/images/causalml_test/header.png", alt="header-image-causality">
 ## Introduction
 In this blog I'll take you through the analysis of A/B test results using CausalML package. It is an easy and powerful package for causal inference that takes into account propensity matching, conditional probabilities and much more. Here, I'll use a dataset with ingrained bias to show how you can still estimate the treatment effect without extensive pre-processing and exploratory analysis. You can download the data [here](https://github.com/AntonsRuberts/datascience_marketing/tree/master/data) and get full code in my [github repo](https://github.com/AntonsRuberts/datascience_marketing/blob/master/CausalML_Analysing_AB_Test.ipynb). Thanks to this [repo](https://github.com/kimusu2008/SPSS_Example1) for initial data.
 
