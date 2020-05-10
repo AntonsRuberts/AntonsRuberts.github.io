@@ -11,12 +11,12 @@ mathjax: "true"
 In this blog I'll take you through the analysis of A/B test results using CausalML package. It is an easy and powerful package for causal inference that takes into account propensity matching, conditional probabilities and much more. Here, I'll use a dataset with ingrained bias to show how you can still estimate the treatment effect without extensive pre-processing and exploratory analysis. You can download the data [here](https://github.com/AntonsRuberts/datascience_marketing/tree/master/data) and get full code in my [github repo](https://github.com/AntonsRuberts/datascience_marketing/blob/master/CausalML_Analysing_AB_Test.ipynb). Thanks to this [repo](https://github.com/kimusu2008/SPSS_Example1) for initial data.
 
 ## Experiments in Marketing
-Experiments are a staple of causal reasoning and are widely used in many disciplines. In digital marketing, A/B test refers to the experiment design that splits the user base into two groups - control and treatment. Treatment group gets exposed to a new feature/design/offer/etc. while the control group's experience stays the same. The behaviours of two groups are monitored and compared with regards to a specific metric (e.g. conversion rate). If the treatment group has a statistically better performance, then the experiment is considered as a success and the feature gets rolled out to the entire user base.
+Experiments are a staple of causal reasoning and are widely used in many disciplines. In digital marketing, A/B test refers to the experiment design that splits the user base into two groups - control and treatment. Treatment group gets exposed to a new feature/design/offer/etc. while the control group's experience stays the same. The behaviours of two groups are monitored and compared with regards to a specific metric (e.g. conversion rate). If the treatment group has a statistically better performance, then the experiment is considered a success and the feature gets rolled out to the entire user base.
 
-Let's imagine a scenario: we want to know whether serving a website with localised translations is better than our current version of one-size-fits-all approach. We decide to run an A/B test and track the conversions of two groups.
+Let's imagine a scenario: we want to know whether serving a website with localised translations is better than our current version of one-size-fits-all approach. We decide to run an A/B test and track the conversions of two groups. We will analyse the data that we've gathered so far to see if the effect of our proposed change.
 
 ## Data Preprocessing
-This dataset is split into two tables, which I'll need to join. Also, most of the variables need to be transformed to serve as inputs into the ML model of choice (here it's LightGBM). To get the data ready, we'll do the following pre-processing steps:
+This dataset is split into two tables, which we'll need to join. Also, most of the variables need to be transformed to serve as inputs into the ML model of choice (here it's LightGBM). To get the data ready, we'll do the following pre-processing steps:
 
 1. Get seasonal variables from date
 2. Join two dataset
@@ -24,6 +24,21 @@ This dataset is split into two tables, which I'll need to join. Also, most of th
 3. Transform categorical into numerical
 
 ```python
+#Imports
+#Data processing
+import pandas as pd
+import numpy as np
+
+#Uplift Modelling
+from lightgbm import LGBMClassifier
+from sklearn.model_selection import cross_val_score
+from causalml.inference.meta import BaseXClassifier
+from sklearn.linear_model import LinearRegression
+
+#Visualisations
+import seaborn as sns
+import matplotlib.pyplot as plt
+
 main = pd.read_csv('./data/test_table.csv')
 users = pd.read_csv('./data/user_table.csv')
 
