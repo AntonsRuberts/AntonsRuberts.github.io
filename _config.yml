@@ -21,7 +21,7 @@ title_separator          : "|"
 subtitle                 : # site tagline that appears below site title in masthead
 name                     : "Antons Ruberts"
 description              : "Methodologies, blogs, and tutorials for MMM, Testing, Propensity, Audiences and much more."
-url                      : "https://antonsruberts.github.io/"
+url                      : "https://antonsruberts.github.io"
 baseurl                  : # the subpath of your site, e.g. "/blog"
 repository               : # GitHub username/repo-name e.g. "mmistakes/minimal-mistakes"
 teaser                   : # path of fallback teaser image, e.g. "/assets/images/500x300.png"
