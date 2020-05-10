@@ -1,6 +1,6 @@
 ---
 layout: archive
-permalink: /data-science/
+permalink: /datascience/
 author_profile: true
 ---
 
