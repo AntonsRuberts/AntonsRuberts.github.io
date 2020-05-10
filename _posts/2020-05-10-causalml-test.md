@@ -13,7 +13,7 @@ In this blog I'll take you through the analysis of A/B test results using Causal
 ## Experiments in Marketing
 Experiments are a staple of causal reasoning and are widely used in many disciplines. In digital marketing, A/B test refers to the experiment design that splits the user base into two groups - control and treatment. Treatment group gets exposed to a new feature/design/offer/etc. while the control group's experience stays the same. The behaviours of two groups are monitored and compared with regards to a specific metric (e.g. conversion rate). If the treatment group has a statistically better performance, then the experiment is considered a success and the feature gets rolled out to the entire user base.
 
-Let's imagine a scenario: we want to know whether serving a website with localised translations is better than our current version of one-size-fits-all approach. We decide to run an A/B test and track the conversions of two groups. We will analyse the data that we've gathered so far to see if the effect of our proposed change.
+Let's imagine a scenario: we want to know whether serving a website with localised translations is better than our current version of one-size-fits-all approach. We decide to run an A/B test and track the conversions of two groups. We will analyse the data that we've gathered so far to see the effect of our proposed change.
 
 ## Data Preprocessing
 This dataset is split into two tables, which we'll need to join. Also, most of the variables need to be transformed to serve as inputs into the ML model of choice (here it's LightGBM). To get the data ready, we'll do the following pre-processing steps:
@@ -47,6 +47,8 @@ users = pd.read_csv('./data/user_table.csv')
 main['date'] = pd.to_datetime(main.date, format = '%Y-%m-%d')
 main['month'] = main['date'].apply(lambda x: x.month)
 main['day_month'] = main['date'].apply(lambda x: x.day)
+#Dropping date column
+main = main.drop('date', axis=1)
 
 #Joining user data
 main = main.merge(users, how='inner')
@@ -61,8 +63,11 @@ for c in categorical:
     main[c] = LabelEncoder().fit_transform(main[c])
     main[c] = main[c].astype('category')
 ```
+
 Here's how the resulting data should look like:
+
 <img src="{{ site.url }}{{ site.baseurl }}/assets/images/causalml_test/data_head.PNG" alt="data-head-after-preprocessing">
+
 ## Initial Analysis
 Columns in the dataframe above are:
 * Test - 1 if a person is part of a test group, 0 if a user is part of control group
@@ -72,9 +77,6 @@ Columns in the dataframe above are:
 If the experiment was properly set-up, we'd be able to directly compare the conversion rates of two groups, and conclude if the experiment was a success.
 
 ```python
-#dropping date column
-main = main.drop('date', axis=1)
-
 sns.set_style("whitegrid")
 sns.barplot(x = ['Control', 'Treatment'], y = main.groupby('test')['conversion'].mean().values)
 plt.title('Conversion Rate')
@@ -146,7 +148,7 @@ learner_x = BaseXClassifier(learner = LGBMClassifier(colsample_bytree=0.8, num_l
 ate_x, ate_x_lb, ate_x_ub = learner_x.estimate_ate(X=X, treatment=treatment, y=y, p = prop_scores[:, 1])
 print(ate_x, ate_x_lb, ate_x_ub)
 ```
-The output should be that the average effect of our change is about 0.0, meaning that there is **no clear effect** of our experiment on the propensity to convert. This is in contrast to simply comparing the means of treatment and control groups.
+The output should be that the average effect of our change is about 0.0. This means that there is **no clear effect** of our experiment on the propensity to convert which is in contrast to our previous conclusion.
 
 ## Summary
 Overall, our initial conclusion that the change has negative effect was wrong. We were able to get a more unbiased estimate of treatment effect using X meta-learner from CausalML package. Let me know your thoughts and if you want me to cover any other topics in testing and causal inference. 
