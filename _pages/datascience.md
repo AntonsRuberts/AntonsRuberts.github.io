@@ -4,7 +4,7 @@ permalink: /datascience/
 author_profile: true
 ---
 
-{% include base_path %}
+<!-- {% include base_path %}
 {% include group-by-array collection=site.posts field="tags" %}
 
 {% for tag in group_names %}
@@ -13,4 +13,4 @@ author_profile: true
   {% for post in posts %}
     {% include archive-single.html %}
   {% endfor %}
-{% endfor %}
+{% endfor %} -->
