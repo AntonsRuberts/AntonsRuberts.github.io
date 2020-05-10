@@ -47,7 +47,7 @@ for c in categorical:
     main[c] = main[c].astype('category')
 ```
 Here's how the resulting data should look like:
-<img src="{{ site.url }}{{ site.baseirl }}/assets/images/causalml_test/data_head.png", alt="Data Head after Preprocessing">
+<img src="{{ site.url }}{{ site.baseurl }}/assets/images/causalml_test/data_head.PNG", alt="Data Head after Preprocessing">
 
 ## Initial Analysis
 Columns in the dataframe above are:
@@ -67,7 +67,7 @@ plt.title('Conversion Rate')
 plt.show()
 print(f'Difference between Control and Treatment {np.round(main.groupby("test")["conversion"].mean()[1] - main.groupby("test")["conversion"].mean()[0], 5)}')
 ```
-<img src="{{ site.url }}{{ site.baseirl }}/assets/images/causalml_test/comparison.png", alt="Comparison Bat Charts">
+<img src="{{ site.url }}{{ site.baseurl }}/assets/images/causalml_test/comparison.png", alt="Comparison Bar Charts">
 
 From this it follows that the conversion rate is smaller by 0.4% in treatment group. However, upon taking a closer look at the data, you might begin to notice some irrelugarities. For example, by grouping the data by Country and Test columns you'll see that countries with indices 0 and 14 have much more Treatment observations than Control. This might be an indication of **selection bias**, so we can't compare two means directly. Luckily, CausalML helps us to identify this type of inconsistencies and gives us a more unbiased result.
 
