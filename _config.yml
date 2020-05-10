@@ -95,7 +95,7 @@ analytics:
 author:
   name             : "Antons Ruberts"
   avatar           : "/assets/images/bio.png"
-  bio              : "Marketing Data Scientist with experience in applying ML to media measurements and audience strategies."
+  bio              : "Data Science & Machine Learning for Marketing"
   location         : "London"
   email            : "antons.ruberts@outlook.com"
   links:
@@ -117,6 +117,9 @@ author:
     - label: "Instagram"
       icon: "fab fa-fw fa-instagram"
       # url: "https://instagram.com/"
+    - label: "LinkedIn"
+      icon: "fab fa-fw fa-linkedin"
+      url: "https://www.linkedin.com/in/antonsruberts/"
 
 # Site Footer
 footer:
