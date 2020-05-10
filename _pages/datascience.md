@@ -1,6 +1,7 @@
 ---
 layout: archive
 permalink: /datascience/
+title: Data Science Posts by Tags
 author_profile: true
 ---
 {% include group-by-array collection=site.posts field="tags" %}
