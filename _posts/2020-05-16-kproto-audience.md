@@ -1,5 +1,5 @@
 ---
-title: K-Prototyeps - Customer Clustering with Mixed Data Types
+title: K-Prototypes - Customer Clustering with Mixed Data Types
 date: 2020-05-16
 tags: [audience, clustering]
 excerpt: "Modeling customer segments in the presence of numerical and categorical features"
