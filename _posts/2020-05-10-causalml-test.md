@@ -3,7 +3,7 @@ title: CausalML - Analysing AB Test Results
 date: 2020-05-10
 tags: [testing, machine learning, causality]
 excerpt: "Establish treatment effect of a test in the presence of confounders using CausalML."
-mathjax: "true"
+classes: wide
 ---
 <img src="{{ site.url }}{{ site.baseurl }}/assets/images/causalml_test/header.png" alt="header-image-causality">
 

@@ -3,7 +3,7 @@ title: K-Prototyeps - Customer Clustering with Mixed Data Types
 date: 2020-05-16
 tags: [audience, clustering]
 excerpt: "Modeling customer segments in the presence of numerical and categorical features"
-mathjax: "true"
+classes: wide
 ---
 <img src="{{ site.url }}{{ site.baseurl }}/assets/images/kproto_audience/header.jpg" alt="header-image-customers">
 
