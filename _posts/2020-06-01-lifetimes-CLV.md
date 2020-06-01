@@ -1,251 +1,222 @@
 ---
-title: Customer Segment Profiling App with Streamlit
-date: 2020-05-24
-tags: [audience, clustering]
-excerpt: "Creating a web app that profiles your customer segments using classification model feature importances"
+title: Modelling Customer Lifetime Value
+date: 2020-06-01
+tags: [audience, CLV]
+excerpt: "Predicting Customer Lifetime Value in Python using BG/NBD and Gamma-Gamma models"
 classes: wide
 ---
-<img src="{{ site.url }}{{ site.baseurl }}/assets/images/streamlit_audience/profiles.png" alt="header-image-profiles">
 
-## Introduction
-The most crucial step of any data science project is deployment. Your model or solution must be accessible to the less technical colleagues (e.g. analysts, managers) in a way that is intuitive and scalable, if you want it to be used. There's a myriad of deployment options now, ranging from API development on cloud to simple integrations into dashboards. Yet, the one that I personally find the most intersting is deployment through a web app. Recently, it became very easy to integrate your models into a web interface using Python packages like Dash and Streamlit. In this blog, I'll show you how you can create an app using Streamlit that profiles your customer segments that you have created (maybe by following [this tutorial](https://antonsruberts.github.io/kproto-audience/)).
+Customer Lifetime Value (CLV) is probably the most useful metric you can have about your customer, yet it's frequently misunderstood. Let's clarify the confusion from the beginning - CLV refers to the monetary value of your relationship with a customer, based on the **discounted value of future transactions** that the customer is going to have. If we phrase the definition this way, it becomes clear that it actually needs a predictive element in it to be accurate. If we know how much profit a customer is going to generate in the future, we can frame our relationship with him accordingly. We can focus our marketing efforts on those who need persuasion or are about to churn, and we can focus on providing the best customer service to the customers with highest value. Most importantly, however, knowing the CLV allows us to focus on the long-term results, not the short-term profits. 
+This blog will show you exactly how you can make a predictive CLV model.  
 
-## Profiling Segments
-Profiling refers to exploring and understanding the segments. With profiling we attempt to explain what makes a particular segment distinguishable and interesting. While you could use a naive approach and compare the averages of segments one feature at a time, there's a smarter way to do it. The approach that I use in my work all the time has 3 steps:
-1. Build a classification model for segments
-2. Get importance values using SHAP
-3. Compare the distributions of segments in the most important features
+## Intuition
+It's crucial to understand the intuition behind CLV. These are the main assumptions that we make:
+1. At each point in time, a customer can decide to buy
+2. Probability of buying is unique for each user and it depends on the historical behaviour
+3. Each customer can churn after a transaction
+4. Probability of churn is unique for each user and it depends on the historical behaviour
 
-The input data needs to have the features used in clustering (plus any other that might be of interest), and a column which corresponds to the assigned clusters. You can find an example data [here](https://github.com/AntonsRuberts/datascience_marketing/tree/master/data) and a profiling notebook in [my github](https://github.com/AntonsRuberts/datascience_marketing/blob/master/segment_profiling.ipynb) to follow along. First, let's write a function that's going to profile each cluster and display the scaled feature values for comparison in a barplot. We'll focus only on 7 most important features, because it's easier to visually interpret. The function has 3 parts that correspond to the steps discussed above. 
+As you can see, we have essentially 2 functions that we need to model - probability of buy at time t, and probability of churn at time. Consider the figure below:
+
+<img src="{{ site.url }}{{ site.baseurl }}/assets/images/lifetimes_clv/CLV_question.png" alt="customer-lifetime-value-chart">
+
+Who do you think is the most valuable customer here? The answer here could be different, but it's definitely not the Orange customer. Just from the purchasing behaviour we can see that she has made a sequence of rapid purchases and has never returned. Hence, we can conclude that she has likely churned, and her lifetime value is close to zero. The customer Green however, just recently became our customer and his pattern tells us that he might continue shopping at our store. Hence his CLV is higher, even though he has spent less money with us than Orange. Let's find out how can we model this type of reasoning in Python.
+
+## Prep
+To model the CLV you need to have transaction data. I took the data for this blog from a Kaggle competition called ["Acquire Valued Shoppers"](https://www.kaggle.com/c/acquire-valued-shoppers-challenge). The disavantage of this dataset is that it's huge (about 20GB), so I've extracted transactions for a single store (which still amounts for 700MB). You can find the extracted data here if you want to follow the tutorial. You can also find the entire notebook in my [github repo](https://github.com/AntonsRuberts/datascience_marketing/blob/master/Customer%20Lifetime%20Value%20Modelling.ipynb) as always. As a main package, I'll be using `lifetimes` - a Python package that has APIs for the models that we're about to use, plus some amazing utility functions. You can simply `pip install lifetimes` and it should work out-of-the-box. Please, check their [documentation](https://lifetimes.readthedocs.io/en/latest/Quickstart.html) if you need more in-depth explanation of algorithms or if you want to see other methods that they offer.
+
+## Data Preprocessing
+Once you have acquired your data in the transactions format, make sure that it has the following columns - customer ID, date of the transaction, and revenue that it has generated. From these 3 columns we can convert the data into RFM format - Recency, Frequency, and Monetary Value. 
+1. Recency - it's the number of time periods between their last and first purchases. In other words, it shows how much time has this customer been active.
+2. Frequency - counts the number of time-periods where you had a repeat purchase.
+3. Monetary value - is the average spend by a customer per repeat purchase day. 
+Another column that we need is T, which is the number of time periods that the customer is listed in your transactions dataset.
+
+In addition to transforming the data into RFM, I'll also split it into train and test sets to ensure that I can get an unbiased estimate of the model's quality. Because the CLV (actually Residual CLV) is time-dependent, the train/test split is different than in other ML tasks. Here, we're going to take the first 8 months as training dataset, and the remaining 4 months will serve as the holdout dataset.  Luckily, there's a utility function in `lifetimes` package, so splitting the data is quite easy. 
 
 ```python
-def profile_clusters(df_profile, categorical=None):
-    #-------------------------------Classification Model-------------------------------
-    X = df_profile.drop('cluster', axis=1)
-    y = df_profile['cluster']
+#Import 
+df = pd.read_csv('./transactions_103338333.csv', parse_dates = ['date'])
 
-    clf = LGBMClassifier(class_weight='balanced', colsample_bytree=0.6)
-    scores = cross_val_score(clf, X, y, scoring='f1_weighted', cv=5)
-    print(f'F1 score is {scores.mean()}')
+#Select 1 year of data with positive sales (no refunds)
+df_year = df.loc[(df.date <= '2013-03-02') & (df.purchaseamount > 0), ['id', 'date', 'purchasequantity', 'purchaseamount']]
+
+#RFM
+#Split
+rfm_train_test = calibration_and_holdout_data(df_year, 'id', 'date',
+                                        calibration_period_end='2012-11-01',
+                                        observation_period_end='2013-03-02',
+                                                  monetary_value_col = 'purchaseamount')
+
+
+#Filter out negatives
+rfm_train_test = rfm_train_test.loc[rfm_train_test.frequency_cal > 0, :]
+
+rfm_train_test.head()
+```
+This is what the transformed data should look like. As you can see, each customer ID has a row with train and test columns in the dataset.
+<img src="{{ site.url }}{{ site.baseurl }}/assets/images/lifetimes_clv/train_test.png" alt="dataframe-extract">
+
+Now, with data in the right format, we're ready to go to the modelling section.
+
+## Modelling & Evaluation
+The modelling & evaluation process is going to be the following:
+1. Fit and evaluate BG/NBD model for frequency prediction
+2. Fit and evaluate Gamma-Gamma model for monetary value prediction
+3. Combine 2 models into CLV model and compare to baseline
+4. Refit the model on the entire dataset
+
+### 1. BG/NBD Model
+This model is an industry standard when it comes to purchase frequency modelling. It stands for Beta Geometric/Negative Binomial Distribution and was introduced by [Fader et al. (2005)](http://brucehardie.com/papers/018/fader_et_al_mksc_05.pdf). Its basic idea is that sales of each customer can be described as a combination of his/her probability to buy and to churn. As such, it models the sales for a particular customer as a function of 2 distributions - Gamma for transactions and probability of churn as Beta. The model that we're about to fit learns 4 parameters that are able to describe these distributions. In this way, we get a unique transaction and churn probability for each customer (as we want) without having a model with hundreds of parameters.
+
+`lifetimes` somewhat follows the `sklearn` syntaxis, so fitting and predicting is quite familiar. Remember, we fit on the training columns (with suffix '_cal') and we're predicting for the testing period. 
+
+```python
+#Train the BG/NBD model
+bgf = BetaGeoFitter(penalizer_coef=0.0)
+bgf.fit(rfm_train_test['frequency_cal'], rfm_train_test['recency_cal'], rfm_train_test['T_cal'])
+
+#Predict
+predicted_bgf = bgf.predict((datetime.datetime(2013, 3, 2)- datetime.datetime(2012, 11, 1)).days, #how many days to predict
+                        rfm_train_test['frequency_cal'], 
+                        rfm_train_test['recency_cal'], 
+                        rfm_train_test['T_cal'])
+```
+
+Now it's time to compare the predicted purchase frequency with the actual target data (it's in the column 'frequency_holdout'). I'm going to make a quantitative comparison by looking at the Mean Absolute Error (MAE), but I'll also do the scatter plot to qualitatively see if a model is any good. In addition, I'm going to bin the frequencies into 10 bins, so that I can calculate the F1 score and plot a confusion matrix. Here's the code to do that:
+
+```python
+actual = rfm_train_test['frequency_holdout']
+predicted = predicted_bgf
+
+def evaluate_clv(actual, predicted, bins):
+    print(f"Average absolute error: {mean_absolute_error(actual, predicted)}")
+    #Evaluate numeric
+    plt.figure(figsize=(10, 7))
+    plt.scatter(predicted, actual)
+    plt.xlabel('Predicted')
+    plt.ylabel('Actual')
+    plt.title('Predicted vs Actual')
+    plt.show()
     
-    # Model quality check
-    if scores.mean() > 0.5:
-        clf.fit(X, y)
-    else:
-        raise ValueError("Clusters are not distinguishable. Can't profile. ")
+    #Evaluate Bins
+    est = KBinsDiscretizer(n_bins=bins, encode='ordinal', strategy='kmeans')
+    est.fit(np.array(actual).reshape(-1, 1))
+    actual_bin = est.transform(np.array(actual).reshape(-1, 1)).ravel()
+    predicted_bin = est.transform(np.array(predicted).reshape(-1, 1)).ravel()
     
-    #-----------------------------SHAP Importance--------------------------------------
-    # Get importance
-    explainer = shap.TreeExplainer(clf)
-    shap_values = explainer.shap_values(X)
+    cm = confusion_matrix(actual_bin, predicted_bin, normalize='true')
+    df_cm = pd.DataFrame(cm, index = range(1, bins+1),
+                      columns = range(1, bins+1))
+    plt.figure(figsize = (20,10))
+    sns.heatmap(df_cm, annot=True)
 
-    # Get 7 most important features
-    importance_dict = {f: 0 for f in X.columns}
-    topn = 7
-    topn = min(len(X.columns), topn)
-    
-    #Aggregating the absolute importance scores per feature per cluster
-    for c in np.unique(df_profile['cluster']):
-        shap_df = pd.DataFrame(shap_values[c], columns=X.columns)
-        abs_importance = np.abs(shap_df).sum()
-        for f in X.columns:
-            importance_dict[f] += abs_importance[f]
-            
-    #Sorting the dictionary by importance
-    importance_dict = {k: v for k, v in sorted(importance_dict.items(), key=lambda item: item[1], reverse=True)}
-    important_features = [k for k, v in importance_dict.items()]
-    n_important_features = [k for k, v in importance_dict.items()][:topn]
-    
-    #----------------------------Output prep--------------------------------------------
-    # DATAFRAME OUTPUT - concatenate profiles of all the clusters into 1 dataframe
-    for k in np.unique(df_profile['cluster']):
-        if k == 0:
-            profile = pd.DataFrame(columns=['cluster', 'feature', 'mean_value'], index=range(len(n_important_features)))
-            profile['cluster'] = k
-            profile['feature'] = n_important_features
-            profile['mean_value'] = df_profile.loc[df_profile.cluster == k, n_important_features].mean().values
-        else:
-            profile_2 = pd.DataFrame(columns=['cluster', 'feature', 'mean_value'],
-                                     index=range(len(n_important_features)))
-            profile_2['cluster'] = k
-            profile_2['feature'] = n_important_features
-            profile_2['mean_value'] = df_profile.loc[df_profile.cluster == k, n_important_features].mean().values
-            profile = pd.concat([profile, profile_2])
-            
-    profile.reset_index(drop=True, inplace=True)
-    
-    #PLOT OUTPUT
-    # Scaling for plotting
-    for c in X.columns:
-        df_profile[c] = MinMaxScaler().fit_transform(np.array(df_profile[c]).reshape(-1, 1))
+    # fix for mpl bug that cuts off top/bottom of seaborn viz
+    b, t = plt.ylim() # discover the values for bottom and top
+    b += 0.5 # Add 0.5 to the bottom
+    t -= 0.5 # Subtract 0.5 from the top
+    plt.ylim(b, t) # update the ylim(bottom, top) values
+    plt.show()
+    print(f'F1 score: {f1_score(actual_bin, predicted_bin, average="macro")}')
+    print('Samples in each bin: \n')
+    print(pd.Series(actual_bin).value_counts())
 
-    # Plotly output
-    cluster_names = [f'Cluster {k}' for k in np.unique(df_profile['cluster'])] # X values such as "Cluster 1", "Cluster 2", etc
-    data = [go.Bar(name=f, x=cluster_names, y=df_profile.groupby('cluster')[f].mean()) for f in n_important_features] #a list of plotly GO objects with different Y values
-    fig = go.Figure(data=data)
-    # Change the bar mode
-    fig.update_layout(barmode='group')
-
-    return fig, profile, important_features
-
+evaluate_clv(actual, predicted, bins=10)
 ```
-The function has 3 outputs, but we're interested only in the Plotly figure (other 2 outputs are for further manual exploration). A few important things to note in the block of code above:
-1. Classifier needs to have `colsample_bytree='balanced'` because some clusters might be underrepresented
-2.  `colsample_bytree=0.6` ensures that the classiier doesn't rely on a single feature that might perfectly explain the clusters
-3. A CV F1 score check by `cross_val_score` is important to ensute that our model does indeed distinguish between clusters
-4. SHAP values can be negative as well (in comparison to `feature_importance` attribute), that's why aggregating the absolute SHAP values is important.
+The resulting average absolute error is ~ 2.92 which is quite good for such a simple model. In addition, by looking at the scatterplot output, we can see that the model's predictions are indeed quite accurate. 
+<img src="{{ site.url }}{{ site.baseurl }}/assets/images/lifetimes_clv/scatter_bg.png" alt="scatterplot-bg">
 
-Now, we can finally run the following code to get our profiles:
-```python
-df = pd.read_csv('./data/ga_customers_clustered.csv')
-df_profile = df.drop('fullVisitorId', axis=1)
-categorical = ['channelGrouping', 'device.browser', 'device.deviceCategory', 'device.operatingSystem', 'trafficSource.medium']
-#OHE if categorical data is present
-if categorical:
-    df_profile = pd.get_dummies(df_profile, columns=categorical)
-fig, profile, important_features = profile_clusters(df_profile, categorical)
+Looking at binned results, we see quite an average F1 score of 0.46. Nevertheless, when we look at the confusion matrix, we can see that the model does get the bins correctly with a margin or error of ~ 1 bin. 
+<img src="{{ site.url }}{{ site.baseurl }}/assets/images/lifetimes_clv/cm_bg.png" alt="scatterplot-bg">
 
-fig.show()
-```
-<img src="{{ site.url }}{{ site.baseurl }}/assets/images/streamlit_audience/prof_clusters.PNG" alt="profiling-barcharts">
+Now that we've validated the BG/NDB model, let's move on to Gamma-Gamma model.
 
-From the chart we can see that 2 of the 9 clusters created are mostly mobile. Furthermore, one of them includes users with high bounce rate while the other one has more hits and page views. Similar analysis can be done for other clusters since all of them are quite distinct. We can also look at distributions by feature using this function:
+### 2. Gamma-Gamma Model
+Gamma-Gamma model presented in the same paper, adds a monetary value into the mix. It does so by assuming that the spend of an individual is right-skewed and follows a Gamma distribution. One of the parameters required to describe Gamma distribution, also varies per customer (so each customer again ends up with different propensity to spend) and it also follows a Gamma distribution. That's why the model is called Gamma-Gamma.
+
+To ensure that we can use Gamma Gamma, we need to check if frequency and monetary values are not correlated. Running `rfm_train_test[['monetary_value_cal', 'frequency_cal']].corr()` will confirm that the two arrays are very weakly correlated with correlation coefficient of only 0.14. Hence, we can fit and evaluate the Gamma-Gamma model:
 
 ```python
-def profile_feature(df_profile, feature):
-    #Checks if it's a binary 
-    if df_profile[feature].nunique() > 2:
-        #If not binary, make Box plots
-        box_data = [go.Box(y=df_profile.loc[df_profile.cluster == k, feature].values, name=f'Cluster {k}') for k in np.unique(df_profile.cluster)]
-        fig = go.Figure(data=box_data)
-    else:
-        #If binary, make bar plot
-        x =[f'Cluster {k}' for k in np.unique(df_profile.cluster)]
-        y = [df_profile.loc[df_profile.cluster == k, feature].mean() for k in np.unique(df_profile.cluster)]
-        fig = go.Figure([go.Bar(x=x, y=y)])
-    return fig
+#Model fit
+ggf = GammaGammaFitter(penalizer_coef = 0)
+ggf.fit(rfm_train_test['frequency_cal'],
+        rfm_train_test['monetary_value_cal'])
 
-feature = 'bounce_prop'
-profile_feature(df_profile, feature)
+#Prediction
+monetary_pred = ggf.conditional_expected_average_profit(rfm_train_test['frequency_holdout'],
+                                        rfm_train_test['monetary_value_holdout'])
+
+#Evaluation
+evaluate_clv(rfm_train_test['monetary_value_holdout'], monetary_pred, bins=10)
 ```
-<img src="{{ site.url }}{{ site.baseurl }}/assets/images/streamlit_audience/prof_features.PNG" alt="profiling-boxplot">
+The average error is quite small, only 1.09 but the F1 score is quite bad - only 0.2. This is due to the way that the purchases get modelled - Gamma-Gamma is too simplistic to capture most of the variation in data. However, when we look at the scatter plot we can see that the predictions are still fairly good:
+<img src="{{ site.url }}{{ site.baseurl }}/assets/images/lifetimes_clv/scatter_gg.png" alt="scatterplot-gg">
 
-This type of profiling allows us to see that clusters 0, 2, and 6 have users who have significant proportion of bounce sessions. By changing the `feature` variable you can see similar plots for other attributes that interest you. 
+Furthermore, when we look at the confusion matrix, we can see that larger values are being placed to the higher bins, which is already great. Keep in mind, that this model will only augment the BG/NBD by providing the average order value, not replace it. Now that 2 models are validated and fitted, we can combine both of them into a complete CLV model.
+<img src="{{ site.url }}{{ site.baseurl }}/assets/images/lifetimes_clv/cm_gg.png" alt="confusion-matrix-gg">
 
-With these 2 functions ready, it's time to make them available to the wider business by putting them into a Streamlit app.
-
-## Streamlit
-[Streamlit](https://www.streamlit.io/) is a Python package that allows you to develop web applications without writing a single (well, almost) line of HTML and JS code. It also doesn't use callbacks (in comparison to Dash), which makes the development even easier. Developing with Streamlit is super fast, and the results almost always look good right out-of-the-box. All of the Streamlit functions and methods that I use are very nicely documented [here](https://docs.streamlit.io/en/latest/api.html#display-interactive-widgets). So, if you have doubts on how to use any of the `st` methods below, check out the documentation or contact me with your question. I'll split the code into 4 steps:
-1. Data upload
-2. Display of cluster profiles (1st function)
-3. Display of feature profiles (2nd function)
-4. Data export
-
-### Data Upload
-Streamlit has a native way to upload files, which makes our job very easy. Also, before passing the data to `profile_clusters` functions, we first need to select the categorical variables and get rid of the ID column. All of this can be done inside the interface using in-built selectors `selectbox` and `multiselect`.
+### 3. CLV Model
+This model will take the prediction of expected purchase and it will combine it with the expected purchase value. Together with the discount rate, these components allow us to arrive at an estimate of how much a customer is worth to you in a given period of time (e.g. here it's 4 months). 
 
 ```python
-st.title('AutoCluster') #Specify title of your app
-st.sidebar.markdown('## Data Import') #Streamlit also accepts markdown
-uploaded_file = st.sidebar.file_uploader("Choose a CSV file", type="csv") #data uploader
+clv = ggf.customer_lifetime_value(
+    bgf, #the model to use to predict the number of future transactions
+    rfm_train_test['frequency_cal'],
+    rfm_train_test['recency_cal'],
+    rfm_train_test['T_cal'],
+    rfm_train_test['monetary_value_cal'],
+    time=4, # months
+    discount_rate=0.01 # monthly discount rate ~ 12.7% annually
+)
 
-if uploaded_file is not None:
-    data = pd.read_csv(uploaded_file)
-    st.markdown('### Data Sample')
-    st.write(data.head())
-    id_col = st.sidebar.selectbox('Pick your ID column', options=data.columns)
-    cat_features = st.sidebar.multiselect('Pick your categorical features', options=[c for c in data.columns], default = [v for v in data.select_dtypes(exclude=[int, float]).columns.values if v != id_col])
-    clusters = data['cluster']
-    df_p = data.drop(id_col, axis=1)
-    if cat_features:
-        df_p = pd.get_dummies(df_p, columns=cat_features) #OHE the categorical features
-    prof = st.checkbox('Check to profile the clusters')
-
-else:
-    st.markdown("""
-    <br>
-    <br>
-    <br>
-    <br>
-    <br>
-    <br>
-    <h1 style="color:#26608e;"> Upload your CSV file to begin clustering </h1>
-    <h3 style="color:#f68b28;"> Data Science for Marketing </h3>
-
-    """, unsafe_allow_html=True) 
+#Assign the clv values
+rfm_train_test['clv'] = clv
 ```
-In the code above, a location of file to upload is passed to the `read_csv` function and this becomes your data object. The `if/else` statements helps us to start the profiling only after a file has been uploaded which avoids unnencessary warnings and errors. Notice, that if you specify `unsafe_allow_html=True` to the markdown method, you can write HTML code with styling and appropriate tags. With data uploaded, we can pass it to the functions that we've previosuly written.
+To somehow evaluate the performance of this model, I'm going to compare it to a simple baseline. Let's imagine a scenario - we need to pick top 20% of our best users to target. Those who are not targeted will not purchase anything, so we need to be careful in the selection process. One way to do it, would be to select those users who have previously purchased a lot. I'll call this method a naive approach and I'll compare it to the model approach. It turns our that if I pick 20% of users according to their historic purchase frequency, I'll end up with 68,818 transactions less in the validation period than if I had picked 20% according to the highest predicted CLV. You can check the code by following the link in the beginning. 
 
-### Display of Cluster Profiles
-Once the data is uploaded, a user will need to check the checkbox to profile. If it's pressed and the data is read in properly, the profiling will start.
+We can now do the same for revenue. If we've picked our top 20% according to their modelled CLV, we end up with additional 1,532,938 compared to the naive approach of picking top 20% according to their historic monetary value. This additional revenue can be visualised in the following graph:
+<img src="{{ site.url }}{{ site.baseurl }}/assets/images/lifetimes_clv/curve_compare.png" alt="two-curves">
 
+The additional revenue generated is the difference between these two curves. Now that we know that our model does a pretty good job, we can retrain the model on the entire year.
+
+### Retraining the Model
+This step just follow everything discussed previously to fit a single model in a single script. 
 ```python
-if (prof == True) & (uploaded_file is not None):
-    fig, profiles, imp_feat = profile_clusters(df_p, categorical=cat_features)
-    st.markdown('<hr>', unsafe_allow_html=True)
-    st.markdown(f'<h3 "> Profiles for {len(np.unique(clusters))} Clusters </h3>',
-                            unsafe_allow_html=True)
-    fig.update_layout(
-        autosize=True,
-            margin=dict(
-                l=0,
-                r=0,
-                b=0,
-                t=40,
-                pad=0
-            ),
-        )
-    st.plotly_chart(fig)
+#RFM
+rfm = summary_data_from_transaction_data(df_year, 'id', 'date', monetary_value_col = 'purchaseamount')
+rfm = rfm.loc[rfm.frequency > 0, :]
 
-    show = st.checkbox('Show up to 20 most important features')
-    if show == True:
-        l = np.min([20, len(imp_feat)])
-        st.write(imp_feat[:l])
+#BG/NBD
+bgf = BetaGeoFitter(penalizer_coef=0.0)
+bgf.fit(rfm['frequency'], rfm['recency'], rfm['T'])
 
-elif (prof == False) & (uploaded_file is not None):
-    st.markdown("""
-    <br>
-    <h2 style="color:#26608e;"> Data is read in. Check the box to profile </h2>
+#GG
+ggf = GammaGammaFitter(penalizer_coef = 0)
+ggf.fit(rfm['frequency'],
+        rfm['monetary_value'])
 
-    """, unsafe_allow_html=True) 
+#CLV model
+clv = ggf.customer_lifetime_value(
+    bgf, #the model to use to predict the number of future transactions
+    rfm['frequency'],
+    rfm['recency'],
+    rfm['T'],
+    rfm['monetary_value'],
+    time=4, # months
+    discount_rate=0.01 # monthly discount rate ~ 12.7% annually
+)
+
+rfm['clv'] = clv
+
+#Print the top 10 most valued customers
+rfm.sort_values('clv', ascending=False).head(10)
 ```
-The if statement ensures that profiling will begin immediately after the data has been read in and the checkbox is checked. Figure gets passed to the `plotly_chart` method which takes care of displaying the figure. Also, a user gets an option to see up to 20 most important variables for further analysis off the application.
+So, finally we can see the top 10 most valued customers:
+<img src="{{ site.url }}{{ site.baseurl }}/assets/images/lifetimes_clv/top_cust.PNG" alt="top-customer-table">
 
-### Display of Feature Profiles
-Because the `profile_feature` function takes feature name as an input, we need to be able to select this feature in the interface. Here again I'm going to use the `selectbox` widget to select feature name and `plotly_chart` to show the output chart. 
+As expected, these are some of the most loyal customers who have been present and buying for the entire year. Well, now you know their IDs. Not bad, right? 
 
-```python
-st.markdown('<hr>', unsafe_allow_html=True)
-st.markdown(f'<h3 "> Features Overview </h3>',
-            unsafe_allow_html=True)
-feature = st.selectbox('Select a feature...', options = df_p.columns)
-feat_fig = profile_feature(df_p, feature)
-st.plotly_chart(feat_fig)
-```
-Notice that it's still under the same condition as the previous block of code.
+## Conclusion
+To conclude, we've just predicted the CLV for the next 4 months for the existing customers. This model jointly models the probability to churn, purchase, and the average purchase value. It's simple, effective, and quite accurate when we look at the aggregated level. There's a multitude of applications for the newly predicted CLV - segmenting, ranking, profiling, personalising, etc. Knowing who your best customers are or who is about to churn is quite useful, and we've just done it with a few lines of code! 
 
-### Data Export 
-Finally, let's say that we want to export the `profiles` dataframe that we've created earlier. We'd need some sort of a download button which, unfortunately, is not available as native Streamlit widget as of yet. Luckily, there's a workaround provided in [this thread](https://discuss.streamlit.io/t/file-download-workaround-added-to-awesome-streamlit-org/1244/6):
-```python
-def get_table_download_link(df, filename, linkname):
-    """Generates a link allowing the data in a given panda dataframe to be downloaded
-    in:  dataframe
-    out: href string
-    """
-    csv = df.to_csv(index=False)
-    b64 = base64.b64encode(
-        csv.encode()
-    ).decode()  # some strings <-> bytes conversions necessary here
-    href = f'<a href="data:file/csv;base64,{b64}" download="{filename}">{linkname}</a>'
-    return href
-
-st.subheader('Downloads')
-st.write(get_table_download_link(profiles,'profiles.csv', 'Download profiles'), unsafe_allow_html=True)
-```
-Now, when you click on the link, the dataframe should be automatically downloaded as csv. 
-
-### Putting It All Together
-With the main functions and Streamlit elements discussed, we can put it all together. You can find the code in [this repo](https://github.com/AntonsRuberts/datascience_marketing/blob/master/cluster_app.py). If you download it and run the following command in command prompt `streamlit run cluster_app.py`, the app should get hosted on your local device. The final interface looks as follows:
-
-{% include video id="422415533" provider="vimeo" %}
-
+Because this model is quite simple, it also has a few notable limitation. It has high bias as it makes a lot of assumptions about the data. Hence, it probably underfits the data and has inferior predictive performance compared to the more complex Machine Learning models. Also, it cannot take context data (e.g. demographics) into account which, again, limits the predictive power of the model. 
