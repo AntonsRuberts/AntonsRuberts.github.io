@@ -14,7 +14,7 @@ CLV prediction involves estimating how much money will a particular customers sp
 
 Notice that we don't need to separate the data into a classical train/test time split. This is becuase statistical models are estimating latent variables using the features period. In other words, we can see this type of modelling as unsupervised and our features periods is both X and Y of our model. This is not the case for supervised ML algorithms like DNN that we're going to use. It needs to have some value that it is trained to predict, and we also need to have a subset of these Y values that the model has never seen before to evaluate the performance. Hence, here's the setup of CLV problem when approaching it as a ML taks:
 
-<img src="{{ site.url }}{{ site.baseurl }}/assets/images/dnn_clv/dnn_time.png" alt="ml-clv-prediction-setup">
+<img src="{{ site.url }}{{ site.baseurl }}/assets/images/dnn_clv/ml_time.png" alt="ml-clv-prediction-setup">
 
 As you can see, now we have a training phase (the top timeline) and the testing phase (the bottom timeline). It's important to keep the date ranges consistent, to ensure that the distribution of data stays the same. Also, this structure clearly shows that the process of estimating the CLV is continious as any additional purchase may change the forecast. You might be wondering when you should use each approach? As always, the answer is it depends. Nevertheless, here are some signs that one appraoch may be preffered over another:
 
@@ -81,7 +81,7 @@ print(data['date'].max() - data['date'].min())
 ```
 Here's how the data looks like:
 <img src="{{ site.url }}{{ site.baseurl }}/assets/images/dnn_clv/table_head.PNG" alt="dataframe-extract">
-<img src="{{ site.url }}{{ site.baseurl }}/assets/images/dnn_clv/ts_plot" alt="timeseries-plot-aggregated">
+<img src="{{ site.url }}{{ site.baseurl }}/assets/images/dnn_clv/ts_plot.png" alt="timeseries-plot-aggregated">
 
 So, we have around 1 year of data. Because the ML approach requires time periods for feature creation, training targets, and validation targets, I'll split it into the following segments:
 
@@ -151,7 +151,6 @@ Here, I'm going to use a Keras API to Tensorflow to build a simple DNN. Architec
 
 ```python
 #DNN
-#DNN
 def build_model():
     model = keras.Sequential([
     layers.Dense(256, activation='relu', input_shape=[len(X_train.columns), ]),
@@ -204,7 +203,7 @@ dnn_preds = model.predict(X_test).ravel()
 
 evaluate(y_test, dnn_preds)
 ```
-From the evaluation print, we can see that the model underpredicts the total number of sales but this is likely due to the large outliers that the model can't predict. You should get the R2 score between 0.5 and 0.7 which is good enough to conclude that our model makes meaningful predictions. MAE achieved here is quite large as well, but this agan is due to the outliers. If you want, you can perform similar evaluation excluding outliers, and you'll get much better results in terms of MSE or MAE. Here's the scatter plot where we can see that the outliers and we can confirm that those with larger CLV are also generally predicted to have larger CLV. 
+From the evaluation print, we can see that the model underpredicts the total number of sales but this is likely due to the large outliers that the model can't predict. You should get the R2 score between 0.5 and 0.7 which is **good enough to conclude that our model makes meaningful predictions**. MAE achieved here is quite large as well, but this agan is due to the outliers. If you want, you can perform similar evaluation excluding outliers, and you'll get much better results in terms of MSE or MAE. Here's the scatter plot where we can see that the outliers and we can confirm that those with larger CLV are also generally predicted to have larger CLV. 
 
 <img src="{{ site.url }}{{ site.baseurl }}/assets/images/dnn_clv/dnn_eval.png" alt="evaluation-scatterplot">
 
