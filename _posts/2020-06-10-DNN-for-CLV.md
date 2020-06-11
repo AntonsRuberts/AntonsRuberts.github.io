@@ -266,13 +266,18 @@ sns.distplot(no_out['actual'])
 sns.distplot(no_out['dnn_preds'])
 plt.title('Actual vs DNN Predictions')
 plt.show()
+```
+<img src="{{ site.url }}{{ site.baseurl }}/assets/images/dnn_clv/dnn_dist.png" alt="dnn-predictions-distribution">
 
+```python
 #Distribution of BG/NBD + Gamma-Gamma
 sns.distplot(no_out['actual'])
 sns.distplot(no_out['stat_pred'])
 plt.title('Actual vs BG/NBD Predictions')
 plt.show()
 ```
+<img src="{{ site.url }}{{ site.baseurl }}/assets/images/dnn_clv/bg_dist.png" alt="dnn-predictions-distribution">
+
 It looks like both models correctly model the revenue as heavily skewed with long tail. Nevertheless, DNN seems to better fit the data as it doesn't have this second spike. Let's now look at the revenue of top 20%.
 
 ```python
