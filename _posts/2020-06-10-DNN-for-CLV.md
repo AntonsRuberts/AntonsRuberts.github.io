@@ -2,7 +2,7 @@
 title: Deep Neural Networks for Customer Lifetime Value
 date: 2020-06-10
 tags: [audience, CLV, ML]
-excerpt: "Using Deep Neural Networks to predict Customer Lifetime Value in Python"
+excerpt: "This blog explores how to frame the Customer Lifetime Value prediction as a regression task and uses Deep Neural Networks to predict the next 3 months of customer sales"
 classes: wide
 header:
     overlay_image: "/assets/images/dnn_clv/header.jpg"
