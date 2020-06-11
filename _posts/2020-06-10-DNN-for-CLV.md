@@ -2,8 +2,12 @@
 title: Deep Neural Networks for Customer Lifetime Value
 date: 2020-06-10
 tags: [audience, CLV, ML]
-excerpt: "Using Deep Neural Networks to predicting Customer Lifetime Value in Python"
+excerpt: "Using Deep Neural Networks to predict Customer Lifetime Value in Python"
 classes: wide
+header:
+    overlay_image: "/assets/images/dnn_clv/header.jpg"
+    overlay_filter: 0.5
+    caption: "Image credit: [pch.vector](https://www.freepik.com/pch-vector)"
 ---
 In the [previous blog](https://antonsruberts.github.io/lifetimes-CLV/), I've talked about estimating the Customer Lifetime Value (CLV) using more classical statistical models BG/NBD and Gamma-Gamma. They are simple (only a few parameters to train) yet highly effective in estimating the future purchasing behaviour. Yet, a common question after using these models is - how can I include contextual data, such as demographics, into my CLV model? Well, with BG/NBD you can't really do it because the model takes no input other than RFM. Luckily, other Machine Learning (ML) algorithms can be easily used to estimate CLV, and they do need as much relevant information as possible about your customers. So, in this blog I'm going to show you how you can approach CLV prediction as ML task, and I'm going to use Deep Neural Networks (DNN) to make a predictive model.  
 
