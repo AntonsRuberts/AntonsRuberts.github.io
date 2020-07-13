@@ -2,7 +2,7 @@
 title: Unsupervised Anomaly Detection in Google Analytics Web Traffic (Part 1)
 date: 2020-07-13
 tags: [ML, Time Series, Anomaly Detection]
-excerpt: "Learn how to detect anomalies in website traffic data using Rolling Averages, Auto-Regressive Model, and Seasonal Decomposition"
+excerpt: "Learn how to detect anomalies in website traffic data using Rolling Averages, Auto-Regressive Model, and Seasonal Model"
 classes: wide
 header:
     overlay_image: "/assets/images/anomaly_ga/header.jpg"
