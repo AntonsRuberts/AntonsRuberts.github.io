@@ -116,7 +116,7 @@ plot(s2, anomaly=anomalies_season2, ts_linewidth=1, ts_markersize=3, anomaly_col
 <img src="{{ site.url }}{{ site.baseurl }}/assets/images/anomaly_ga/seasonal1.png" alt="Detected seasonal anomalies in traffic 1">
 Comparing to Rolling Averages approach, Seasonal model is a lot more consistent in the outliers it identifies. These are the spikes which do not match seasonal pattern. That's why we can see some of the spikes not highilghted - these are seasonal spikes and not outliers. In this sense, the model highlights less points, but these points are more likely to be outliers.
 
-<img src="{{ site.url }}{{ site.baseurl }}/assets/images/anomaly_ga/seasonal1.png" alt="Detected seasonal anomalies in traffic 1">
+<img src="{{ site.url }}{{ site.baseurl }}/assets/images/anomaly_ga/seasonal2.png" alt="Detected seasonal anomalies in traffic 2">
 Here again, the key outliers are highlighted meaning that the spike during the Christmas period of 2015 is abnormal. But the seasonal model doesn't highlight the December 2016 spikes, meaning that these spikes are in-line with seasonal expectation of a model. If we look closely at the time series, we can see that indeed during the December period wee can expect larger number of visits. Hence, the Seasonal model again is more likely to be correct than simple Moving Averages. 
 
 ### Auto-Regressive Model
