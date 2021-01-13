@@ -10,17 +10,17 @@
 # Review documentation to determine if you should use `theme` or `remote_theme`
 # https://mmistakes.github.io/minimal-mistakes/docs/quick-start-guide/#installing-the-theme
 
-# theme                  : "minimal-mistakes-jekyll"
+theme                  : "minimal-mistakes-jekyll"
 # remote_theme           : "mmistakes/minimal-mistakes"
 minimal_mistakes_skin    : "default" # "air", "aqua", "contrast", "dark", "dirt", "neon", "mint", "plum", "sunrise"
 
 # Site Settings
 locale                   : "en-GB"
-title                    : "Data Science for Marketing"
+title                    : "Well Enough"
 title_separator          : "|"
 subtitle                 : # site tagline that appears below site title in masthead
 name                     : "Antons Ruberts"
-description              : "Methodologies, blogs, and tutorials for MMM, Testing, Propensity, Audiences and much more."
+description              : "Tutorials, blogs and what not for data science topics like marketing, fraud detection, and graph ML"
 url                      : "https://antonsruberts.github.io"
 baseurl                  : # the subpath of your site, e.g. "/blog"
 repository               : # GitHub username/repo-name e.g. "mmistakes/minimal-mistakes"
@@ -94,8 +94,8 @@ analytics:
 # Site Author
 author:
   name             : "Anton Ruberts"
-  avatar           : "/assets/images/bio.png"
-  bio              : "Data Science & Machine Learning for Marketing"
+  #avatar           : "/assets/images/bio.png"
+  bio              : "Practical Machine Learning"
   location         : "London"
   email            : "antons.ruberts@outlook.com"
   links:
@@ -268,6 +268,14 @@ compress_html:
   ignore:
     envs: development
 
+collections:
+  marketing:
+    output: true
+    permalink: /:path/
+  graph:
+    output: true
+    permalink: /:collection/:path/
+
 
 # Defaults
 defaults:
@@ -290,4 +298,23 @@ defaults:
     values:
       layout: single
       author_profile: true
+  
+  # _marketing
+  - scope:
+      path: ""
+      type: marketing
+    values:
+      layout: single
+      author_profile: true
+      share: true
+  
+  # _graph
+  - scope:
+      path: ""
+      type: graph
+    values:
+      layout: single
+      author_profile: true
+      share: true
+  
       

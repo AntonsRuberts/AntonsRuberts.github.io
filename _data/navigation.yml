@@ -1,9 +1,13 @@
 # main links
 main:
+  - title: "Home"
+    url: /
   - title: "About"
     url: /about/
-  - title: "Data Science"
-    url: /datascience/
+  - title: "ML for Marketing"
+    url: /marketing/
+  - title: "Graph ML"
+    url: /graph/
   # - title: "About"
   #   url: https://mmistakes.github.io/minimal-mistakes/about/
   # - title: "Sample Posts"
