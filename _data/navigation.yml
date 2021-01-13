@@ -5,7 +5,7 @@ main:
   - title: "About"
     url: /about/
   - title: "ML for Marketing"
-    url: /marketing/
+    url: /
   - title: "Graph ML"
     url: /graph/
   # - title: "About"

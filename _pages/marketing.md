@@ -1,7 +1,7 @@
 ---
 title: Marketing
 layout: collection
-permalink: /marketing/
+permalink: /
 collection: marketing
 entries_layout: grid
 classes: wide
