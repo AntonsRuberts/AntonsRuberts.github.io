@@ -17,11 +17,11 @@ Imagine now that my friends from university and from work are giant football fan
 
 <img src="../../assets/images/label_propagation/graph_anton2.png" alt="basic-graph-with-5-nodes-colored">
 
-Just by looking at this graph, it becomes logical that node Anton should also be coloured blue! This is exactly the idea of label propagation - if everyone in my surrounding likes football, I'm very likely to like it as well. Which makes intuitive sense, right? My colleagues and friends are going to discuss it all the time, watch games togethers, and play it themselves. At some point, I'm likely to give in and just join a game or two, until I become a massive fan myself. But let's say, that my colleagues from work still like the football, but my friends from university now started to enjoy boxing more. Let's denote **boxing = red**.
+Just by looking at this graph, it becomes logical that node Anton should also be coloured blue! This is exactly the idea of label propagation - if everyone in my surrounding likes football, I'm very likely to like it as well. Which makes intuitive sense, right? My colleagues and friends are going to discuss it all the time, watch games togethers, and play it themselves. At some point, I'm likely to give in and just join a game or two, until I become a massive fan myself. But let's say, that my colleagues from work still like football, but my friends from university now started to enjoy boxing more. Let's denote **boxing = red**.
 
 <img src="../../assets/images/label_propagation/graph_anton3.png" alt="basic-graph-with-5-nodes-colored-with-boxing">
 
-Now it's more challenging, right? Will my node become blue or red? Well, probably something in the middle because I want to part of the both of the groups. Label propagation algorithms ensure that the labels of your surrounding are sort of averaged and the node Anton gets something of a magenta colour. 
+Now it's more challenging, right? Will my node become blue or red? Well, probably something in the middle because I want to be a part of the both of the groups. Label propagation algorithms ensure that the labels of your surrounding are sort of averaged and the node Anton gets something of a magenta colour.
 
 <img src="../../assets/images/label_propagation/graph_anton4.png" alt="basic-graph-with-5-nodes-colored-with-boxing2">
 
