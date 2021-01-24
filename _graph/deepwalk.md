@@ -1,6 +1,6 @@
 ---
 title: Classifying Facebook Pages using DeepWalk & Node2Vec
-date: 2021-01-05
+date: 2021-01-24
 tags: [graphs, classification]
 excerpt: "Generate node embeddings using DeepWalk and Node2Vec in Python"
 classes: wide
@@ -305,7 +305,7 @@ As we can see, the results are roughly the same, so we'd need to do a proper gri
 
 <img src="../../assets/images/deepwalk/embs_comparison.png" alt="DeepWalk-vs-Node2Vec-embeddings">
 
-As can be seen from the embeddings, the `company`, `government`, and `tvshows` are represented by clear clusters whereas `politician` clusters is kind of scattered around. Plus, there are pages which are not clustered meaning that they are probably much harder to classify. 
+As can be seen from the embeddings, the `company`, `government`, and `tvshows` are represented by clear clusters whereas `politician` clusters is kind of scattered around. Plus, there are pages which are not clustered meaning that they are probably much harder to classify.
 
 ## Conclusion
 
