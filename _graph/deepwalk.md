@@ -4,9 +4,13 @@ date: 2021-01-24
 tags: [graphs, classification]
 excerpt: "Generate node embeddings using DeepWalk and Node2Vec in Python"
 classes: wide
+header:
+    overlay_image: "../../assets/images/white_background.png"
+    overlay_filter: 0.5
+    caption: "Image credit: [starline](https://www.freepik.com/starline)"
 ---
 
-In the [previous blog](https://antonsruberts.github.io/graph/label_propagation/) we saw how the graph structure can be used in classification via label propagation. We sort of averaged the label information from the node neighbours which is quite a naive approach (but effective). There is another way to extract the structural information from the graph - node embeddings. If you've ever worked with NLP, you'll know what I'm talking about. We want to represent the nodes in the n-dimensional vector form that reflects the structural properties of the graph. Sounds like a mouthful, so let's take a quick look at the example. You can find all the code in [this notebook](https://github.com/AntonsRuberts/graph_ml/blob/main/Facebook%20-%20DeepWalk%20and%20Node2Vec.ipynb)
+In the [previous blog](https://antonsruberts.github.io/graph/label_propagation/) we saw how the graph structure can be used in classification via label propagation. It was similar to averaging label information from the node neighbours which is quite a naive approach, though effective. There is another way to extract the structural information from the graph - node embeddings. If you've ever worked with NLP, you'll know what I'm talking about. We want to represent the nodes in the n-dimensional vector form that reflects the structural properties of the graph. Sounds like a mouthful, so let's take a quick look at the example below. You can find all the code in [this notebook](https://github.com/AntonsRuberts/graph_ml/blob/main/Facebook%20-%20DeepWalk%20and%20Node2Vec.ipynb)
 
 ### Karate Club Example
 We are going to use the famous Zachary's karate club dataset which comes with `NetworkX` package and `karateclub`'s implementation of the DeepWalk algorithm. Each student in the graph belongs to 1 of the 2 karate clubs - Officer or Mr. Hi.
@@ -95,7 +99,7 @@ walker.do_walks(G)  # you can access the walks in walker.walks
 Now the question is - how can we get meaningful embeddings using the generated random walks? Well, if you've ever worked with NLP you already know the answer - use the Word2Vec algorithm. In particular, we're going to use the skip-gram model with hierarchical softmax layer. There are a lot of detailed resources about the inner workings of these algorithms, but here are my favourites - Word2Vec explained by [Rasa](https://www.youtube.com/watch?v=BWaHLmG1lak) and hierarchical softmax explained by [Chris McCormick](https://www.youtube.com/watch?v=pzyIWCelt_E).
 
 The main idea of the skip-gram model is to predict the context of a sequence from a particular node (or word). For example, if we want to train embeddings for node 6 (example above), we'll train our model (usually a simple dense neural network) with the goal to predict the nodes that appear in its random walks. So, the model's input will be the node 6 (one-hot-encoded), middle layer will be the actual embedding, and output will be prediction of the node's context. This is a very high-level explanation and I encourage you to watch the videos above if you feel confused.
-!
+
 <img src="../../assets/images/deepwalk/skipgram.png" alt="skipgram-illustration">
 
 Since it's the same process as with Word2Vec, we can use the `gensim` implementation of the algorithm to get the embeddings.
@@ -147,7 +151,7 @@ for k, vs in tqdm(features.items()):
     i+=1
 ```
 
-With data read in, we can build a graph now and generate the embeddings.
+With data read in, we can now build a graph and generate the embeddings.
 
 ### DeepWalk on Facebok Graph
 
@@ -171,7 +175,7 @@ model = Word2Vec(walker.walks,  # previously generated walks
                  seed=42)
 ```
 
-DeepWalk model is now trained, so we can use the embeddings for classification. We can quickly sense check the model by looking at the nearest neighbours in the embeddings space of some of the facebook pages. For example, let's check the most similar nodes to the Facebook page of American Express (ID 22196) and the BBC's show Apprentice (ID 451)
+DeepWalk model is trained, so we can use the embeddings for classification. We can quickly sense check the model by looking at the nearest neighbours in the embeddings space of some of the Facebook's pages. For example, let's check the most similar nodes to the Facebook page of American Express (ID 22196) and the BBC's show Apprentice (ID 451)
 
 ```python
 similar_to = '22196'
