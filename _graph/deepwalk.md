@@ -10,7 +10,10 @@ header:
     caption: "Image credit: [starline](https://www.freepik.com/starline)"
 ---
 
-In the [previous blog](https://antonsruberts.github.io/graph/label_propagation/) we saw how the graph structure can be used in classification via label propagation. It was similar to averaging label information from the node neighbours which is quite a naive approach, though effective. There is another way to extract the structural information from the graph - node embeddings. If you've ever worked with NLP, you'll know what I'm talking about. We want to represent the nodes in the n-dimensional vector form that reflects the structural properties of the graph. Sounds like a mouthful, so let's take a quick look at the example below. You can find all the code in [this notebook](https://github.com/AntonsRuberts/graph_ml/blob/main/Facebook%20-%20DeepWalk%20and%20Node2Vec.ipynb)
+In the [previous blog](https://antonsruberts.github.io/graph/label_propagation/) we saw how the graph structure can be used in classification via label propagation. It was similar to averaging label information from the node neighbours which is quite a naive approach, though effective. There is another way to extract the structural information from the graph - node embeddings. If you've ever worked with NLP, you'll know what I'm talking about. We want to represent the nodes in the n-dimensional vector form that reflects the neighbourhood and proximity properties of the graph. Sounds like a mouthful, so let's take a quick look at the example below. You can find all the code in [this notebook](https://github.com/AntonsRuberts/graph_ml/blob/main/Facebook%20-%20DeepWalk%20and%20Node2Vec.ipynb)
+
+Below we'll do a deep dive into DeepWalk and Node2Vec and a large portion of the code was taken from `karateclub`'s source code. You can read the [package's documentation](https://karateclub.readthedocs.io/en/latest/modules/root.html#neighbourhood-based-node-embedding), they did a fantastic job implemneting all of these models. Don't forget to start the [github repo](https://github.com/benedekrozemberczki/karateclub) as well!
+
 
 ### Karate Club Example
 We are going to use the famous Zachary's karate club dataset which comes with `NetworkX` package and `karateclub`'s implementation of the DeepWalk algorithm. Each student in the graph belongs to 1 of the 2 karate clubs - Officer or Mr. Hi.
@@ -122,7 +125,7 @@ And that's it! The embeddings are trained, so you can use them e.g. as features 
 
 ## Facebook Data
 
-Facebook data can be downloaded from [this repo](https://github.com/benedekrozemberczki/datasets). As in the previous blog, there's 3 files - edges, targets, and features.
+Facebook data can be downloaded from the [dataset repo](https://github.com/benedekrozemberczki/datasets). This particular dataset is a netowork of Facebook Pages and was used in [this paper](https://arxiv.org/abs/1802.03997). As in the previous blog, there's 3 files - edges, targets, and features.
 
 ```python
 edges_path = 'datasets-master/facebook_large/facebook_edges.csv'
