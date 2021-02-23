@@ -290,6 +290,7 @@ defaults:
       comments:  true
       share: true
       related: true
+      mathjax: true
   
   # _pages
   - scope:

@@ -10,7 +10,7 @@ header:
     caption: "Image credit: [starline](https://www.freepik.com/starline)"
 ---
 
-In the [previous blog](https://antonsruberts.github.io/graph/label_propagation/) we saw how the graph structure can be used in classification via label propagation. It was similar to averaging label information from the node neighbours which is quite a naive approach, though effective. There is another way to extract the structural information from the graph - node embeddings. If you've ever worked with NLP, you'll know what I'm talking about. We want to represent the nodes in the n-dimensional vector form that reflects the neighbourhood and proximity properties of the graph. Sounds like a mouthful, so let's take a quick look at the example below. You can find all the code in [this notebook](https://github.com/AntonsRuberts/graph_ml/blob/main/Facebook%20-%20DeepWalk%20and%20Node2Vec.ipynb)
+In the [previous blog](https://antonsruberts.github.io/graph/label_propagation/) we saw how the node proximity can be used in classification via label propagation. It was similar to averaging label information from the node neighbours which is quite a naive approach, though effective. There is another way to extract the neighbourhood information from the graph - node embeddings. If you've ever worked with NLP, you'll know what I'm talking about. We want to represent the nodes in the n-dimensional vector form that reflects the neighbourhood and proximity properties of the graph. Sounds like a mouthful, so let's take a quick look at the example below. You can find all the code in [this notebook](https://github.com/AntonsRuberts/graph_ml/blob/main/Facebook%20-%20DeepWalk%20and%20Node2Vec.ipynb)
 
 Below we'll do a deep dive into DeepWalk and Node2Vec and a large portion of the code was taken from `karateclub`'s source code. You can read the [package's documentation](https://karateclub.readthedocs.io/en/latest/modules/root.html#neighbourhood-based-node-embedding), they did a fantastic job implemneting all of these models. Don't forget to start the [github repo](https://github.com/benedekrozemberczki/karateclub) as well!
 
@@ -43,7 +43,7 @@ print('Number of karate club members:', len(G.nodes))
 print('Embedding array shape:', embedding.shape)
 ```
 
-Using DeepWalk (which is a black box algorithm for now) each karate club member is now represented by a vector of size 124. These vectors should reflect the graph structure, i.e. the different clubs should be far away from each other. We can check it by reducing the 124 dimensional data into 2 dimensional data using `umap-learn` package and making a scatter plot.
+Using DeepWalk (which is a black box algorithm for now) each karate club member is now represented by a vector of size 124. These vectors should reflect the graph neighbourhoods, i.e. the different clubs should be far away from each other. We can check it by reducing the 124 dimensional data into 2 dimensional data using `umap-learn` package and making a scatter plot.
 
 ```python
 u = umap.UMAP(random_state=42)
@@ -57,12 +57,12 @@ for i, point in a.iterrows():
 
 <img src="../../assets/images/deepwalk/karate_club_embs.png" alt="karate-club-graph-embeddings">
 
-As you can see, the embeddings did very well at representing the structure of the graph. Not only the two karate clubs are clearly separated but the members which are connected to the other clubs (e.g. nodes 28, 30, 8, and 2) are sort of more in the middle. In addition, the algorithm seems to have found a sub-community in the "Officer" karate club, which just shows how useful these embeddings can be. To summarise, **DeepWalk (and any other node embedding algorithm) tries to represent the nodes as vectors which capture some structural information from the graph.**
+As you can see, the embeddings did very well at representing graph neighbourhoods. Not only are the two karate clubs clearly separated but the members connected to the other clubs are more in the middle (e.g. nodes 28, 30, 8, and 2). In addition, the algorithm seems to have found a sub-community in the "Officer" karate club, which just shows how useful these embeddings can be. To summarise, **DeepWalk (and any other neighbourhood based node embedding algorithm) represents the nodes as vectors which capture some neighbourhood information from the graph.**
 
-Now that you have an intuitive understanding of what are we trying to achieve, let's see how exactly DeepWalk does its magic. To do that, we first need to understand the concept of random walk on graph.
+Now that you have an intuitive understanding of what are we trying to achieve on the graph, let's see how exactly DeepWalk does its magic. To do that, we first need to understand the concept of random walk on graph.
 
 ### Random Walk
-Random walk is a sequence of nodes, where next node is chosen randomly from the adjacent nodes. For example, let's start our random walk from node 25. From the graph above we can see that the node 25 (right-most) is connected to the nodes 24 and 31. Hence, using a coin-flip we'll determine where we go next. If we've arrived at the node 24, we can see that it's connected to the members 23, 27, and 31. Again, we need to choose randomly where to go next. This "walk" continues until we've reached the desired walk length. Let's now write a simple function to implement this in code.
+Random walk is a sequence of nodes, where next node is chosen randomly from the adjacent nodes. For example, let's start our random walk from node 25. From the graph above we can see that the node 25 (right-most) is connected to the nodes 24 and 31. Hence, using a coin-flip we'll determine where we go next. If we've arrived at the node 24, we can see that it's connected to the members 23, 27, and 31. Again, we need to choose randomly where to go next. This "walk" continues until we've reached the desired walk length. Let's write a simple function to implement this in code.
 
 ```python
 def random_walk(start_node, walk_length):
@@ -90,7 +90,7 @@ nx.draw_networkx(walk_graph, pos=pos, cmap='coolwarm')
 
 <img src="../../assets/images/deepwalk/random_walk.png" alt="random-walk-graph">
 
-So we've generated a random walk with length of 20 starting at node 6. You can follow the steps of this walk on the graph above and see that every step is between connected nodes. By doing this walk we've got useful information about the context of the node 6. By that I mean that we now know some of the neighbours (and neighbours' neighbours) of node 6 which could be useful in classification problem for example. By repeating this random walk multiple times for all the nodes in the graph, we can get a bunch of "walk" sequences that contain useful information. The paper suggests doing around 10 walks per node with the walk length of 80. We could implement this with 2 for-loops but luckily for us, `karateclub` package has already implemented this for us (and it's much faster). Here's how you'd get the random walks in 2 lines of code.
+So we've generated a random walk with the length of 20 starting at node 6. You can follow the steps of this walk on the graph above and see that every step is located between the connected dots. By doing this walk we've got useful information about the context of node 6. By that I mean that we now know some of the neighbours (and neighbours' neighbours) of node 6 which could be useful in classification problem, for example. By repeating this random walk multiple times for all the nodes in the graph, we can get a bunch of "walk" sequences that contain useful information. The paper suggests doing around 10 walks per node with the walk length of 80. We could implement this with 2 for-loops but, luckily for us, `karateclub` package has already implemented this for us (and it's much faster). Here's how you'd get the random walks in 2 lines of code.
 
 ```python
 walker = RandomWalker(walk_length = 80, walk_number = 10)
@@ -99,7 +99,7 @@ walker.do_walks(G)  # you can access the walks in walker.walks
 
 ### Skip-Gram
 
-Now the question is - how can we get meaningful embeddings using the generated random walks? Well, if you've ever worked with NLP you already know the answer - use the Word2Vec algorithm. In particular, we're going to use the skip-gram model with hierarchical softmax layer. There are a lot of detailed resources about the inner workings of these algorithms, but here are my favourites - Word2Vec explained by [Rasa](https://www.youtube.com/watch?v=BWaHLmG1lak) and hierarchical softmax explained by [Chris McCormick](https://www.youtube.com/watch?v=pzyIWCelt_E).
+Now the question is - how can we get meaningful embeddings using the generated random walks? Well, if you've ever worked with NLP you already know the answer - use the Word2Vec algorithm. In particular, we're going to use the skip-gram model with a hierarchical softmax layer. There are a lot of detailed resources about the inner workings of these algorithms, but here are my favourites - Word2Vec explained by [Rasa](https://www.youtube.com/watch?v=BWaHLmG1lak) and hierarchical softmax explained by [Chris McCormick](https://www.youtube.com/watch?v=pzyIWCelt_E).
 
 The main idea of the skip-gram model is to predict the context of a sequence from a particular node (or word). For example, if we want to train embeddings for node 6 (example above), we'll train our model (usually a simple dense neural network) with the goal to predict the nodes that appear in its random walks. So, the model's input will be the node 6 (one-hot-encoded), middle layer will be the actual embedding, and output will be prediction of the node's context. This is a very high-level explanation and I encourage you to watch the videos above if you feel confused.
 
@@ -125,7 +125,7 @@ And that's it! The embeddings are trained, so you can use them e.g. as features 
 
 ## Facebook Data
 
-Facebook data can be downloaded from the [dataset repo](https://github.com/benedekrozemberczki/datasets). This particular dataset is a netowork of Facebook Pages and was used in [this paper](https://arxiv.org/abs/1802.03997). As in the previous blog, there's 3 files - edges, targets, and features.
+Facebook data can be downloaded from the [dataset repo](https://github.com/benedekrozemberczki/datasets). This particular dataset is a network of Facebook Pages and was used in [this paper](https://arxiv.org/abs/1802.03997). As in the previous blog, there are 3 files - edges, targets, and features.
 
 ```python
 edges_path = 'datasets-master/facebook_large/facebook_edges.csv'
@@ -186,7 +186,7 @@ targets.loc[[int(similar_to)] + [int(v[0]) for v in model.wv.most_similar(simila
 ```
 <img src="../../assets/images/deepwalk/most_similar.png" alt="most-similar-dataframe">
 
-As you can see, the nearest neighbours are incredibly similar to the original pages and all of this is achieved without even knowing what the original pages are about! Hence, the embeddings that the DeepWalk has learned are meaningful and we can use them in the classifier. We can build a simple Random Forest model to see what performance we can achieve using purely the embeddings.
+As you can see, the nearest neighbours are incredibly similar to the original pages and all of this is achieved without even knowing what the original pages are about! Hence, the embeddings that the DeepWalk has learned are meaningful and we can use them in the classifier. We can build a simple Random Forest model to see what performance we can achieve purely using the embeddings.
 
 ```python
 # Get targets 
@@ -212,14 +212,14 @@ print(confusion_matrix(y_test, y_pred, normalize='true'))
 #F1 Score: ~ 0.93
 ```
 
-As you can see, the performance is really good with F1 score of ~0.93 (yours will be different but should still be high). We can try to improve the performance a bit further by using a different sampling strategy in random walk which was described in [Node2Vec algorithm paper](https://arxiv.org/pdf/1607.00653.pdf).
+As you can see, the performance is really good with F1 score of ~0.93 (yours will be different but should still be high). We can try to improve the performance a bit further by using a different sampling strategy in random walk that was described in [Node2Vec algorithm paper](https://arxiv.org/pdf/1607.00653.pdf).
 
 ### Node2Vec on Facebook Graph
 
-Node2Vec is very similar to DeepWalk, but the random walks are generated a bit differently. Recall that in the pure random walk, neighbourhood nodes have an equal probability to be chosen as next step. Here instead, we have 2 hyperparameters to tune - `p` and `q`. `p` and `q` control how fast the walk explores and leaves the neighbourhood of starting node u.
+Node2Vec is very similar to DeepWalk, but the random walks are generated a bit differently. Recall that in the pure random walk, neighbourhood nodes have an equal probability to be chosen as next step. Here instead, we have 2 hyperparameters to tune - `p` and `q`. `p` and `q` control how fast the walk explores and leaves the neighbourhood of the starting node u.
 
-* p - high values means that we're less likely to return to the previous node
-* q - high values approximate the Breadth-First-Search meaning that the neighbourhood around the node is explored. Low values give higher chance to go outside the neighbourhood and hence approximates the Depth-First-Search
+* p - high value means that we're less likely to return to the previous node
+* q - high value approximates the Breadth-First-Search meaning that the neighbourhood around the node is explored. Low values give higher chance to go outside the neighbourhood and hence approximates the Depth-First-Search
 
 Here's the code block from `karate-club` package that does the Biased Random Walk. I'm showing it here so that you have a better understanding of what's happening under the hood.
 
@@ -312,8 +312,8 @@ As we can see, the results are roughly the same, so we'd need to do a proper gri
 
 <img src="../../assets/images/deepwalk/embs_comparison.png" alt="DeepWalk-vs-Node2Vec-embeddings">
 
-As can be seen from the embeddings, the `company`, `government`, and `tvshows` are represented by clear clusters whereas `politician` clusters is kind of scattered around. Plus, there are pages which are not clustered meaning that they are probably much harder to classify.
+As can be seen from the embeddings, the `company`, `government`, and `tvshows` are represented by clear clusters whereas `politician` clusters are scattered around. Plus, there are pages which are not clustered meaning that they are probably much harder to classify.
 
 ## Conclusion
 
-Just by using structural graph information we were able to extract node embeddings which were incredibly useful in the downstream task of classification. Here you saw two node embedding algorithms - DeepWalk and Node2Vec. I hope that you have a better understanding of how these algorithms work, and how to apply them to the real-world graph datasets. Plus, we've covered a very important fundamental aspect of random walk, and its variant - biased random walk. These concepts are crucial in working with graphs data and you will encounter them in a lot of other papers. In next blogs we'll keep exploring new graph ML algorithms, so stay tuned.
+Just by using node proximity information from graph we were able to extract node embeddings which were incredibly useful in the downstream task of classification. Here you saw two node embedding algorithms - DeepWalk and Node2Vec. I hope that now you have a better understanding of how these algorithms work, and how to apply them to the real-world graph datasets. Plus, we've covered a very important fundamental aspect of random walk, and its variant - biased random walk. These concepts are crucial in working with graphs data and you will encounter them in a lot of other papers. In the next blogs we'll keep exploring new graph ML algorithms, so stay tuned.
