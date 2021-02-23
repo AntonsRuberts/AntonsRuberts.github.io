@@ -12,7 +12,7 @@ header:
 
 ## Graph Convolutional Networks
 
-In the previous blogs we've looked at graph embedding methods that tried to capture the neighbourhood and some structural information from graphs. While these methods were quite successful in representing the nodes, they could not incorporate node features into these embeddings. For some tasks this information might be crucial, so today we'll cover Graph Convolutional Networks (GCN) which can use both - graph and node feature information. As you could guess from the name, GCN is a neural network architecture that works with graph data. The main goal of GCN is to distill graph and node attribute information into the vector node representation aka embeddings. Below you can see the intuitive depiction of GCN from Kipf and Welling (2016) [paper](https://arxiv.org/abs/1609.02907).
+In the previous blogs we've looked at graph embedding methods that tried to capture the neighbourhood information from graphs. While these methods were quite successful in representing the nodes, they could not incorporate node features into these embeddings. For some tasks this information might be crucial, so today we'll cover Graph Convolutional Networks (GCN) which can use both - graph and node feature information. As you could guess from the name, GCN is a neural network architecture that works with graph data. The main goal of GCN is to distill graph and node attribute information into the vector node representation aka embeddings. Below you can see the intuitive depiction of GCN from Kipf and Welling (2016) [paper](https://arxiv.org/abs/1609.02907).
 
 <img src="../../assets/images/gcn/gcn_explained.png" alt="gcn-explanation">
 
