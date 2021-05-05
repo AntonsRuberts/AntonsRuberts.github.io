@@ -304,3 +304,5 @@ The difference is only 6,134 (you'll get different answer) which is quite insign
 
 ## Conclusion
 In this blog, you saw how you can approach the CLV problem as ML regressions task. We've delved into feature engineering for such tasks, trained a 3 layer DNN, and evaluated it. The comparison to a simpler statistical approach have shown no particular advantage of using DNN for this particular dataset. In general, this conclusion is quite relevant for a lot of data science tasks: use the simplest technique that fits the task and achieves good results. But, if you have access to a lot more data and a lot more personal features, makes sure to experiment with the ML approach.
+
+<a href="https://www.buymeacoffee.com/wellenough" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="41" width="174"></a>

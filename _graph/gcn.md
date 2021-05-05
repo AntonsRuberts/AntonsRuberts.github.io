@@ -361,3 +361,5 @@ The test scores have imporved as expected, so adding more data can still lead to
 GCNs are a powerful deep neural network architecture that allows you to combine the feature and graph neighbourhood information. This is achieved by multiplying previous layer values by the normalised adjacency matrix which acts as a convolutional filter. As a result of this multiplication, the features of neighbouring nodes get aggregated and useful embeddings can be learned using back-propagation as usual. 
 
 I hope that by now you know not only how to apply GCNs to your data but also feel more confident about what's happening under the hood. Thank you for reading, and if you have any questions or comments, feel free to reach out using my email or LinkedIn.
+
+<a href="https://www.buymeacoffee.com/wellenough" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="41" width="174"></a>

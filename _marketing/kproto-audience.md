@@ -227,3 +227,4 @@ Overall, classifiers for both of the clustering methods have F1 score close to 1
 ## Summary
 In this blog, we saw that in the presence of categorical features, K-Prototypes has produced clusters that are visually and empirically superior to the ones produced by K-Means. While both of the algorithms have separated customers into distinguishable groups, clusters created by K-Prototypes are more informative and hence can be more useful for marketers. So, next time you do clustering and encounter categorical features, ease up on that one-hot-encoding and give K-Prototypes a chance. 
 
+<a href="https://www.buymeacoffee.com/wellenough" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="41" width="174"></a>

@@ -249,3 +249,6 @@ With the main functions and Streamlit elements discussed, we can put it all toge
 
 {% include video id="422415533" provider="vimeo" %}
 
+<a href="https://www.buymeacoffee.com/wellenough" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="41" width="174"></a>
+
+

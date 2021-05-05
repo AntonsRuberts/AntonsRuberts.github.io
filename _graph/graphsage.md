@@ -479,3 +479,6 @@ As you can see, while there is some noise, two classes are distinctly separated 
 GraphSAGE network is not only a powerful graph algorithm, but also one of the very few inductive learning approaches suitable for production. I hope that after reading this blog you have a better understanding of GraphSAGE and an intuition of why it works. You also saw how the model is implemented in the `stellargraph` library and how it can be used for classification. 
 
 Thank you for reading, and if you have any questions or comments, feel free to reach out using my email or LinkedIn.
+
+<a href="https://www.buymeacoffee.com/wellenough" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="41" width="174"></a>
+
